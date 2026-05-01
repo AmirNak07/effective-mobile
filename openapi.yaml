@@ -1,0 +1,404 @@
+openapi: "3.0.3"
+info:
+    title: Effective Mobile
+    version: "1.0"
+servers:
+    - url: https://localhost:8080
+paths:
+    /health:
+        get:
+            summary: Health check
+            description: Проверка работоспособности сервиса
+            operationId: healthCheck
+            tags:
+                - Healthcheck
+            responses:
+                "200":
+                    description: Сервис работает нормально
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status:
+                                        type: string
+                                        enum: [ok]
+                                        example: ok
+                                        description: Статус сервиса
+                            example:
+                                status: ok
+    /subscriptions:
+        post:
+            summary: Создать новую подписку
+            description: Добавляет запись о подписке пользователя на сервис
+            operationId: createSubscription
+            tags:
+                - Subscriptions
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - service_name
+                                - price
+                                - user_id
+                                - start_date
+                            properties:
+                                service_name:
+                                    type: string
+                                    description: Название сервиса (например, Yandex Plus, Netflix, Spotify)
+                                    minLength: 1
+                                    maxLength: 100
+                                    example: "Yandex Plus"
+                                price:
+                                    type: integer
+                                    description: Стоимость месячной подписки в рублях (целое число)
+                                    minimum: 0
+                                    example: 400
+                                user_id:
+                                    type: string
+                                    format: uuid
+                                    description: ID пользователя в формате UUID (существование не проверяется)
+                                    example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                start_date:
+                                    type: string
+                                    description: Дата начала подписки в формате месяц-год
+                                    pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                                    example: "07-2025"
+                                end_date:
+                                    type: string
+                                    description: Дата окончания подписки в формате месяц-год (опционально)
+                                    pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                                    example: "07-2026"
+                            example:
+                                service_name: "Yandex Plus"
+                                price: 400
+                                user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                start_date: "07-2025"
+            responses:
+                "201":
+                    description: Подписка успешно создана
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Subscription"
+                            example:
+                                id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                                service_name: "Yandex Plus"
+                                price: 400
+                                user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                start_date: "07-2025"
+                                end_date: null
+                                created_at: "2025-05-01T10:30:00Z"
+                                updated_at: "2025-05-01T10:30:00Z"
+                "400":
+                    description: Ошибка валидации (неверный формат данных)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+        get:
+            summary: Получить список подписок
+            description: Возвращает список подписок с возможностью фильтрации по пользователю и пагинацией
+            operationId: getSubscriptions
+            tags:
+                - Subscriptions
+            parameters:
+                - name: user_id
+                  in: query
+                  description: Фильтр по ID пользователя (UUID)
+                  required: false
+                  schema:
+                      type: string
+                      format: uuid
+                  example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                - name: limit
+                  in: query
+                  description: Максимальное количество записей в ответе
+                  required: false
+                  schema:
+                      type: integer
+                      minimum: 1
+                      maximum: 100
+                      default: 20
+                  example: 20
+                - name: offset
+                  in: query
+                  description: Смещение для пагинации
+                  required: false
+                  schema:
+                      type: integer
+                      minimum: 0
+                      default: 0
+                  example: 0
+            responses:
+                "200":
+                    description: Успешный ответ со списком подписок
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items:
+                                        type: array
+                                        items:
+                                            $ref: "#/components/schemas/Subscription"
+                                    total:
+                                        type: integer
+                                        description: Общее количество записей (без учёта limit/offset)
+                                        example: 42
+                                    limit:
+                                        type: integer
+                                        example: 20
+                                    offset:
+                                        type: integer
+                                        example: 0
+                            example:
+                                items:
+                                    - id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                                      service_name: "Yandex Plus"
+                                      price: 400
+                                      user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                      start_date: "07-2025"
+                                      end_date: null
+                                      created_at: "2025-05-01T10:30:00Z"
+                                      updated_at: "2025-05-01T10:30:00Z"
+                                    - id: "8d0f7780-8536-51ef-055c-f8702g01bf8"
+                                      service_name: "Netflix"
+                                      price: 799
+                                      user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                      start_date: "01-2025"
+                                      end_date: "06-2025"
+                                      created_at: "2025-04-15T14:20:00Z"
+                                      updated_at: "2025-04-20T09:15:00Z"
+                                total: 42
+                                limit: 20
+                                offset: 0
+                "400":
+                    description: Ошибка валидации (неверный формат UUID)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+    /subscriptions/{id}:
+        get:
+            summary: Получить подписку по ID
+            description: Возвращает подробную инфомацию одной подписки
+            operationId: getSubscriptionById
+            tags:
+                - Subscriptions
+            parameters:
+                - name: id
+                  in: path
+                  description: UUID подписки
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+                  example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+            responses:
+                "200":
+                    description: Успешный ответ с данными подписки
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Subscription"
+                            example:
+                                id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                                service_name: "Yandex Plus"
+                                price: 400
+                                user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                start_date: "07-2025"
+                                end_date: null
+                                created_at: "2025-05-01T10:30:00Z"
+                                updated_at: "2025-05-01T10:30:00Z"
+                "404":
+                    description: Подписка с указанным ID не найдена
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+                            example:
+                                error: "Not found"
+                                message: "Subscription with id 7c9e6679-7425-40de-944b-e07fc1f90ae7 not found"
+                                status_code: 404
+                "400":
+                    description: Неверный формат UUID
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+        put:
+            summary: Полностью обновить подписку
+            description: Заменяет все поля существующей подписки. Все поля обязательны для передачи (кроме end_date)
+            operationId: updateSubscription
+            tags:
+                - Subscriptions
+            parameters:
+                - name: id
+                  in: path
+                  description: UUID подписки
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+                  example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - service_name
+                                - price
+                                - user_id
+                                - start_date
+                            properties:
+                                service_name:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 100
+                                    example: "Yandex Plus Premium"
+                                price:
+                                    type: integer
+                                    minimum: 0
+                                    example: 599
+                                user_id:
+                                    type: string
+                                    format: uuid
+                                    example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                start_date:
+                                    type: string
+                                    pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                                    example: "08-2025"
+                                end_date:
+                                    type: string
+                                    pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                                    nullable: true
+                                    example: "08-2026"
+                        example:
+                            service_name: "Yandex Plus Premium"
+                            price: 599
+                            user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                            start_date: "08-2025"
+                            end_date: "08-2026"
+            responses:
+                "200":
+                    description: Подписка успешно обновлена
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Subscription"
+                            example:
+                                id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                                service_name: "Yandex Plus Premium"
+                                price: 599
+                                user_id: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                                start_date: "08-2025"
+                                end_date: "08-2026"
+                                created_at: "2025-05-01T10:30:00Z"
+                                updated_at: "2025-05-01T14:25:00Z"
+                "400":
+                    description: Ошибка валидации (неверный формат данных или UUID)
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+                "404":
+                    description: Подписка с указанным ID не найдена
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+                            example:
+                                error: "Not found"
+                                message: "Subscription with id 7c9e6679-7425-40de-944b-e07fc1f90ae7 not found"
+                                status_code: 404
+        delete:
+            summary: Удалить подписку
+            description: Удаляет существующую подписку по ID.
+            operationId: deleteSubscription
+            tags:
+                - Subscriptions
+            parameters:
+                - name: id
+                  in: path
+                  description: UUID подписки
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+                  example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+            responses:
+                "204":
+                    description: Подписка успешно удалена (тело ответа пустое)
+                "404":
+                    description: Подписка с указанным ID не найдена
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+                            example:
+                                error: "Not found"
+                                message: "Subscription with id 7c9e6679-7425-40de-944b-e07fc1f90ae7 not found"
+                                status_code: 404
+                "400":
+                    description: Неверный формат UUID
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+    schemas:
+        Subscription:
+            type: object
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                service_name:
+                    type: string
+                price:
+                    type: integer
+                user_id:
+                    type: string
+                    format: uuid
+                start_date:
+                    type: string
+                    pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                end_date:
+                    type: string
+                    pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                    nullable: true
+                created_at:
+                    type: string
+                    format: date-time
+                updated_at:
+                    type: string
+                    format: date-time
+            required:
+                - id
+                - service_name
+                - price
+                - user_id
+                - start_date
+                - created_at
+
+        ErrorResponse:
+            type: object
+            properties:
+                error:
+                    type: string
+                    example: "Validation failed"
+                message:
+                    type: string
+                    example: "price must be an integer"
+                status_code:
+                    type: integer
+                    example: 400
