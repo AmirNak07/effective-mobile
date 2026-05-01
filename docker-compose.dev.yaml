@@ -1,0 +1,10 @@
+services:
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: swagger-ui
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./openapi.yaml:/usr/share/nginx/html/openapi.yaml
+    environment:
+      API_URL: /openapi.yaml
