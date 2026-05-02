@@ -8,5 +8,5 @@ type Config struct {
 }
 
 func MustLoad() *Config {
-	return pkgconfig.MustLoad[Config](".env")
+	return pkgconfig.MustLoadFromEnv[Config]()
 }
