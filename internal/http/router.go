@@ -6,5 +6,6 @@ func NewRouter(h *Handler) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", h.Health)
-	return mux
+
+	return CORSMiddleware(mux)
 }
