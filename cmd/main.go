@@ -42,8 +42,11 @@ func main() {
 	router := httpTrasport.NewRouter(handler)
 
 	server := http.Server{
-		Addr:    ":8080",
-		Handler: router,
+		Addr:              ":8080",
+		Handler:           router,
+		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		WriteTimeout:      10 * time.Second,
 	}
 
 	go func() {

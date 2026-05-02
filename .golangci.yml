@@ -1,0 +1,116 @@
+version: "2"
+
+run:
+  timeout: 5m
+  concurrency: 4
+  tests: true
+
+output:
+  formats:
+    text:
+      path: stdout
+      colors: true
+
+linters:
+  default: none
+  enable:
+    # Ошибки и баги
+    - errcheck
+    - gosec
+    - govet
+    - staticcheck
+    - bodyclose
+    - nilerr
+    - sqlclosecheck
+    - rowserrcheck
+    - contextcheck
+    - noctx
+    - makezero
+    - durationcheck
+
+    # Стиль и читаемость
+    - gocritic
+    - misspell
+    - predeclared
+    - unconvert
+    - whitespace
+
+    # Сложность и производительность
+    - gocyclo
+    - gocognit
+    - funlen
+    - nestif
+    - prealloc
+    - ineffassign
+    - unused
+    - unparam
+    - nakedret
+    - goconst
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - fmt.Print
+        - fmt.Println
+        - fmt.Printf
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+
+    gocyclo:
+      min-complexity: 15
+
+    gocognit:
+      min-complexity: 20
+
+    funlen:
+      lines: 100
+      statements: 50
+
+    nestif:
+      min-complexity: 4
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+
+    nakedret:
+      max-func-lines: 30
+
+    misspell:
+      locale: US
+
+  exclusions:
+    paths:
+      - vendor
+      - third_party
+      - testdata
+      - examples
+    rules:
+      - path: _test\.go
+        linters:
+          - funlen
+          - gocyclo
+          - gocognit
+          - goconst
+          - gosec
+          - unparam
+          - errcheck
+      - path: \.gen\.go$
+        linters:
+          - all
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/your-org/your-project
+    gofmt:
+      simplify: true
