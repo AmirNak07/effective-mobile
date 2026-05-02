@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	httpTrasport "effective-mobile/internal/http"
-	"fmt"
-	"log"
+	"effective-mobile/pkg/logger"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -13,6 +12,7 @@ import (
 	"effective-mobile/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -25,17 +25,29 @@ func main() {
 	)
 	defer stop()
 
+	log := logger.NewLogger(cfg.Env)
+	go func() {
+		if err := log.Sync(); err != nil {
+			log.Error(ctx, "failed to sync logger", zap.Error(err))
+		}
+	}()
+
+	log.Info(ctx, "Starting CRUD service",
+		zap.String("env", cfg.Env),
+	)
+
 	pool, err := pgxpool.New(ctx, cfg.Postgres.DSN())
 	if err != nil {
-		fmt.Errorf("failed to connect to postgres") // TODO: Добавить логи
+		log.Error(ctx, "failed to connect to postgres", zap.Error(err))
 		return
 	}
 	defer pool.Close()
 
 	if err = pool.Ping(ctx); err != nil {
-		fmt.Errorf("failed to ping postgres") // TODO: Добавить логи
+		log.Error(ctx, "failed to ping postgres", zap.Error(err))
 		return
 	}
+	log.Info(ctx, "connected to postgres")
 
 	handler := httpTrasport.NewHandler()
 
@@ -50,20 +62,20 @@ func main() {
 	}
 
 	go func() {
+		log.Info(ctx, "CRUD service started")
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Errorf("Server failed to start: %v", err) // TODO: Добавить логи
+			log.Error(ctx, "server error", zap.Error(err))
 		}
 	}()
 
 	<-ctx.Done()
+	log.Info(ctx, "shutting down server")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Server shutdown error: %v", err)
+		log.Error(ctx, "failed to shutdown server", zap.Error(err))
 	}
+	log.Info(ctx, "CRUD service stopped")
 }
-
-// TODO: Добавить логирование
-// TODO: Добавить таймауты
