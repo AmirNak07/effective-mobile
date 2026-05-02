@@ -8,7 +8,7 @@ services:
       - ./openapi.yaml:/usr/share/nginx/html/openapi.yaml
     environment:
       API_URL: /openapi.yaml
-  
+
   postgres:
     image: postgres:${POSTGRES_VERSION}
     container_name: postgres
