@@ -1,8 +1,13 @@
 package http
 
+import "github.com/go-playground/validator/v10"
+
 type Handler struct {
+	validator *validator.Validate
 }
 
 func NewHandler() *Handler {
-	return &Handler{}
+	return &Handler{
+		validator: validator.New(),
+	}
 }
