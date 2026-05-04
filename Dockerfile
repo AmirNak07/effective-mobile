@@ -22,9 +22,8 @@ RUN addgroup -g 1000 appuser && \
 
 WORKDIR /app
 
-COPY --from=builder /app/bin/crud /app/crud
+COPY --chown=appuser:appuser --from=builder /app/bin/crud /app/crud
 
-RUN chown -R appuser:appuser /app
 USER appuser
 
 ENTRYPOINT ["/app/crud"]
