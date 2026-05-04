@@ -184,6 +184,66 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ErrorResponse"
 
+    /subscriptions/total-cost:
+        get:
+            summary: Получить суммарную стоимость подписок
+            description: Возвращает суммарную стоимость всех подписок за выбранный период с фильтрацией по пользователю и названию сервиса
+            operationId: getTotalCost
+            tags:
+                - Subscriptions
+            parameters:
+                - name: user_id
+                  in: query
+                  description: Фильтр по ID пользователя (UUID)
+                  required: false
+                  schema:
+                      type: string
+                      format: uuid
+                  example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+                - name: service_name
+                  in: query
+                  description: Фильтр по названию сервиса
+                  required: false
+                  schema:
+                      type: string
+                  example: "Yandex Plus"
+                - name: from
+                  in: query
+                  description: Начало периода (месяц-год)
+                  required: true
+                  schema:
+                      type: string
+                      pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                  example: "01-2025"
+                - name: to
+                  in: query
+                  description: Конец периода (месяц-год)
+                  required: true
+                  schema:
+                      type: string
+                      pattern: "^(0[1-9]|1[0-2])-(\\d{4})$"
+                  example: "12-2025"
+            responses:
+                "200":
+                    description: Успешный ответ с суммарной стоимостью
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    total_cost:
+                                        type: integer
+                                        description: Суммарная стоимость подписок
+                                        example: 1200
+                            example:
+                                total_cost: 1200
+                "400":
+                    description: Ошибка валидации параметров запроса
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ErrorResponse"
+
     /subscriptions/{id}:
         get:
             summary: Получить подписку по ID
