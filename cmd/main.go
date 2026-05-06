@@ -83,7 +83,3 @@ func main() {
 	}
 	log.Info(ctx, "CRUD service stopped")
 }
-
-// TODO: Добавить сервисы
-// TODO: Добавить репозиторий
-// TODO: Добавить redis
