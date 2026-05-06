@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	httpTrasport "effective-mobile/internal/http"
+	"effective-mobile/internal/service"
 	"effective-mobile/pkg/logger"
 	"net/http"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"effective-mobile/internal/config"
+	"effective-mobile/internal/repository/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -49,7 +51,9 @@ func main() {
 	}
 	log.Info(ctx, "connected to postgres")
 
-	handler := httpTrasport.NewHandler()
+	repo := postgres.NewSubscriptionRepository(pool)
+	service := service.NewService(repo)
+	handler := httpTrasport.NewHandler(log, service)
 
 	router := httpTrasport.NewRouter(handler)
 
@@ -79,3 +83,7 @@ func main() {
 	}
 	log.Info(ctx, "CRUD service stopped")
 }
+
+// TODO: Добавить сервисы
+// TODO: Добавить репозиторий
+// TODO: Добавить redis
