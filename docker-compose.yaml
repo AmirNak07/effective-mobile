@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:\${POSTGRES_VERSION}
+    container_name: postgres
+    environment:
+      POSTGRES_USER: \${POSTGRES_ADMIN_USER}
+      POSTGRES_PASSWORD: \${POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: \${POSTGRES_ADMIN_DB}
+      SUBSCRIPTIONS_USER: \${POSTGRES_USER}
+      SUBSCRIPTIONS_PASSWORD: \${POSTGRES_PASSWORD}
+      SUBSCRIPTIONS_DB: \${POSTGRES_DB}
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=100"
+      - "-c"
+      - "shared_buffers=128MB"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  crud:
+    build:
+      dockerfile: Dockerfile
+    container_name: crud
+    environment:
+      - ENV=\${ENV}
+      - POSTGRES_HOST=\${POSTGRES_HOST}
+      - POSTGRES_PORT=\${POSTGRES_PORT}
+      - POSTGRES_USER=\${POSTGRES_USER}
+      - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD}
+      - POSTGRES_DB=\${POSTGRES_DB}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres_data:
+    driver: local
