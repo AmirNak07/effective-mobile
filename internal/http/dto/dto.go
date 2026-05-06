@@ -1,6 +1,9 @@
-package http
+package dto
 
-import "time"
+import (
+	"effective-mobile/internal/domain"
+	"time"
+)
 
 type CreateSubscriptionRequest struct {
 	ServiceName string  `json:"service_name" validate:"required,min=1,max=100"`
@@ -16,6 +19,12 @@ type UpdateSubscriptionRequest struct {
 	UserID      string  `json:"user_id" validate:"required,uuid"`
 	StartDate   string  `json:"start_date" validate:"required,datetime=01-2006"`
 	EndDate     *string `json:"end_date,omitempty" validate:"omitempty,datetime=01-2006"`
+}
+
+type ListSubscriptionsRequest struct {
+	UserID string `validate:"omitempty,uuid"`
+	Limit  int    `validate:"omitempty,min=1,max=100"`
+	Offset int    `validate:"omitempty,gte=0"`
 }
 
 type SubscriptionResponse struct {
@@ -51,4 +60,14 @@ type ErrorResponse struct {
 	Error      string `json:"error"`
 	Message    string `json:"message"`
 	StatusCode int    `json:"status_code"`
+}
+
+func (req *CreateSubscriptionRequest) ToDomain() domain.Subscription {
+	return domain.Subscription{
+		ServiceName: req.ServiceName,
+		Price:       req.Price,
+		UserID:      req.UserID,
+		StartDate:   req.StartDate,
+		EndDate:     req.EndDate,
+	}
 }
